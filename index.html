@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phonebook App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      transition: 0.3s;
+    }
+    button:hover { background: #0056b3; }
+    
+    .contact {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f1f1;
+      margin-top: 5px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .contact span { flex: 1; }
+
+    .btn-small {
+      width: auto;
+      padding: 5px 10px;
+      font-size: 13px;
+      margin-left: 5px;
+      border-radius: 4px;
+    }
+    .btn-edit {
+      background-color: #28a745;
+    }
+    .btn-edit:hover {
+      background-color: #1e7e34;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+    }
+    .btn-delete:hover {
+      background-color: #b21f2d;
+    }
+  </style>
+</head>
+<body>
+  <h1> Phonebook Application</h1>
+  <div class="container">
+    <h3>Add / Update Contact</h3>
+    <input type="hidden" id="contactId">
+    <input type="text" id="name" placeholder="Enter name">
+    <input type="text" id="phone" placeholder="Enter phone number">
+    <button onclick="addOrUpdateContact()">Save Contact</button>
+    
+    <h3>Search Contact</h3>
+    <input type="text" id="search" placeholder="Search by name or phone" onkeyup="searchContact()">
+    
+    <h3>All Contacts</h3>
+    <div id="contacts"></div>
+  </div>
+
+  <script>
+    const apiUrl = "https://jsonplaceholder.typicode.com/users"; 
+    
+    // Fetch and display contacts
+    async function fetchContacts() {
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        displayContacts(data);
+      } catch (error) {
+        alert("Error fetching contacts: " + error.message);
+      }
+    }
+
+    // Display contacts
+    function displayContacts(data) {
+      const contactsDiv = document.getElementById("contacts");
+      contactsDiv.innerHTML = "";
+      data.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "contact";
+        div.innerHTML = `
+          <span>${c.name} - ${c.phone}</span>
+          <div>
+            <button class="btn-small btn-edit" onclick="editContact('${c.id}','${c.name}','${c.phone}')">Edit</button>
+            <button class="btn-small btn-delete" onclick="deleteContact('${c.id}')">Delete</button>
+          </div>
+        `;
+        contactsDiv.appendChild(div);
+      });
+    }
+
+    // Add or update contact
+    async function addOrUpdateContact() {
+      const id = document.getElementById("contactId").value;
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      
+      if (!name || !phone) {
+        alert("Please fill out both fields");
+        return;
+      }
+
+      const newContact = { name, phone };
+      try {
+        if (id) {
+          await fetch(`${apiUrl}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newContact),
+          });
+          alert("Contact updated successfully");
+        } else {
+          await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newContact),
+          });
+          alert("Contact added successfully");
+        }
+        document.getElementById("name").value = "";
+        document.getElementById("phone").value = "";
+        document.getElementById("contactId").value = "";
+        fetchContacts();
+      } catch (error) {
+        alert("Error saving contact: " + error.message);
+      }
+    }
+
+    // Edit contact
+    function editContact(id, name, phone) {
+      document.getElementById("contactId").value = id;
+      document.getElementById("name").value = name;
+      document.getElementById("phone").value = phone;
+    }
+
+    // Delete contact
+    async function deleteContact(id) {
+      if (!confirm("Are you sure?")) return;
+      try {
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+        alert("Contact deleted successfully");
+        fetchContacts();
+      } catch (error) {
+        alert("Error deleting contact: " + error.message);
+      }
+    }
+
+    // Search contacts
+    async function searchContact() {
+      const term = document.getElementById("search").value.toLowerCase();
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const filtered = data.filter(c =>
+          c.name.toLowerCase().includes(term) || c.phone.includes(term)
+        );
+        displayContacts(filtered);
+      } catch (error) {
+        alert("Error searching contact: " + error.message);
+      }
+    }
+
+    // Initial load
+    fetchContacts();
+  </script>
+</body>
+</html>
