@@ -48,113 +48,104 @@
       padding: 10px;
       border-radius: 5px;
     }
-    .contact span { flex: 1; }
-
     .btn-small {
       width: auto;
       padding: 5px 10px;
       font-size: 13px;
-      margin-left: 5px;
       border-radius: 4px;
+      color: white;
+      cursor: pointer;
     }
-    .btn-edit {
-      background-color: #28a745;
-    }
-    .btn-edit:hover {
-      background-color: #1e7e34;
-    }
-    .btn-delete {
-      background-color: #dc3545;
-    }
-    .btn-delete:hover {
-      background-color: #b21f2d;
-    }
+    .btn-edit { background-color: #28a745; }
+    .btn-delete { background-color: #dc3545; }
+    .btn-edit:hover { background-color: #1e7e34; }
+    .btn-delete:hover { background-color: #b21f2d; }
   </style>
 </head>
 <body>
-  <h1> Phonebook Application</h1>
+
+  <h1>Phonebook Application</h1>
+
   <div class="container">
+
     <h3>Add / Update Contact</h3>
     <input type="hidden" id="contactId">
     <input type="text" id="name" placeholder="Enter name">
     <input type="text" id="phone" placeholder="Enter phone number">
     <button onclick="addOrUpdateContact()">Save Contact</button>
-    
+
     <h3>Search Contact</h3>
     <input type="text" id="search" placeholder="Search by name or phone" onkeyup="searchContact()">
-    
+
     <h3>All Contacts</h3>
     <div id="contacts"></div>
+
   </div>
 
   <script>
-    const apiUrl = "https://jsonplaceholder.typicode.com/users"; 
     
-    // Fetch and display contacts
+    const apiUrl = "https://6917fabb21a96359486e6cab.mockapi.io/contacts";
+
+
+    // Fetch Contacts
     async function fetchContacts() {
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        displayContacts(data);
-      } catch (error) {
-        alert("Error fetching contacts: " + error.message);
-      }
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      displayContacts(data);
     }
 
-    // Display contacts
+
+    // Display Contacts
     function displayContacts(data) {
-      const contactsDiv = document.getElementById("contacts");
-      contactsDiv.innerHTML = "";
+      const div = document.getElementById("contacts");
+      div.innerHTML = "";
+
       data.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "contact";
-        div.innerHTML = `
+        const row = document.createElement("div");
+        row.className = "contact";
+
+        row.innerHTML = `
           <span>${c.name} - ${c.phone}</span>
           <div>
-            <button class="btn-small btn-edit" onclick="editContact('${c.id}','${c.name}','${c.phone}')">Edit</button>
+            <button class="btn-small btn-edit" onclick="editContact('${c.id}', '${c.name}', '${c.phone}')">Edit</button>
             <button class="btn-small btn-delete" onclick="deleteContact('${c.id}')">Delete</button>
           </div>
         `;
-        contactsDiv.appendChild(div);
+
+        div.appendChild(row);
       });
     }
 
-    // Add or update contact
+
+    // Add / Update Contact
     async function addOrUpdateContact() {
       const id = document.getElementById("contactId").value;
       const name = document.getElementById("name").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      
+
       if (!name || !phone) {
-        alert("Please fill out both fields");
+        alert("Please fill both fields");
         return;
       }
 
-      const newContact = { name, phone };
-      try {
-        if (id) {
-          await fetch(`${apiUrl}/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newContact),
-          });
-          alert("Contact updated successfully");
-        } else {
-          await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newContact),
-          });
-          alert("Contact added successfully");
-        }
-        document.getElementById("name").value = "";
-        document.getElementById("phone").value = "";
-        document.getElementById("contactId").value = "";
-        fetchContacts();
-      } catch (error) {
-        alert("Error saving contact: " + error.message);
-      }
+      const data = { name, phone };
+
+      let method = id ? "PUT" : "POST";
+      let url = id ? `${apiUrl}/${id}` : apiUrl;
+
+      await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("phone").value = "";
+      document.getElementById("contactId").value = "";
+
+      fetchContacts();
     }
+
 
     // Edit contact
     function editContact(id, name, phone) {
@@ -163,35 +154,39 @@
       document.getElementById("phone").value = phone;
     }
 
+
     // Delete contact
     async function deleteContact(id) {
-      if (!confirm("Are you sure?")) return;
-      try {
-        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
-        alert("Contact deleted successfully");
-        fetchContacts();
-      } catch (error) {
-        alert("Error deleting contact: " + error.message);
-      }
+      if (!confirm("Are you sure you want to delete?")) return;
+
+      await fetch(`${apiUrl}/${id}`, {
+        method: "DELETE"
+      });
+
+      fetchContacts();
     }
 
-    // Search contacts
+
+    // Search
     async function searchContact() {
       const term = document.getElementById("search").value.toLowerCase();
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        const filtered = data.filter(c =>
-          c.name.toLowerCase().includes(term) || c.phone.includes(term)
-        );
-        displayContacts(filtered);
-      } catch (error) {
-        alert("Error searching contact: " + error.message);
-      }
+
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+
+      const filtered = data.filter(c =>
+        c.name.toLowerCase().includes(term) ||
+        c.phone.includes(term)
+      );
+
+      displayContacts(filtered);
     }
 
     // Initial load
     fetchContacts();
   </script>
+
 </body>
 </html>
+
+
